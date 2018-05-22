@@ -14,15 +14,17 @@ day=$(date +%u)
 servername=$(curl ipinfo.io/hostname)
 
 ## Find all keyspaces
-KEY=$(cqlsh -e "DESC KEYSPACES" | tr -d '"')
+### KEY=$(cqlsh -e "DESC KEYSPACES" | tr -d '"')
+KEY=deltaforce
 
 ## Take snapshot only for a specific Keyspace only for testing
-nodetool -h localhost -p 7199 snapshot "OpsCenter" > snapshot_dir_list
-for mykeyspaces in OpsCenter; do
+#nodetool -h localhost -p 7199 snapshot "deltaforce" > snapshot_dir_list
+#for mykeyspaces in OpsCenter; do
 
 ## Create snapshot for all keyspaces
-## for mykeyspaces in $KEY; do
-## nodetool -h localhost -p 7199 snapshot $mykeyspaces > snapshot_dir_list
+for mykeyspaces in $KEY; do
+nodetool -h localhost -p 7199 snapshot $mykeyspaces > snapshot_dir_list
+cqlsh -e "DESCRIBE KEYSPACE $mykeyspaces" > $mykeyspaces.cql
 
 ## Create Snapshot archive
 echo "Create Snapshot archive for $mykeyspaces"
@@ -45,6 +47,8 @@ gzfile=$(sudo find $dir -type f -name $X.gz)
         else
         echo "Upload to AWS has been completed with successful" 
         fi
+
+        /usr/local/bin/aws s3 --profile Backups_Group cp $mykeyspaces.cql s3://$bucket/$servername/$date/ ## Send Schema to S3 Bucket
 
                 ## Sync Backufor mykeyspaces in $KEY; dop with Storage Folder
                 if [ $day = 1 ]; then
